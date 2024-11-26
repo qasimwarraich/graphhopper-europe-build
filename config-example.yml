@@ -1,0 +1,54 @@
+graphhopper:
+  # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
+  datareader.file: "europe-latest.osm.pbf"
+  # Local folder used by graphhopper to store its data
+  graph.location: graph-cache
+  profiles:
+    - name: racingbike
+      custom_model_files: [racingbike.json, bike_elevation.json]
+  profiles_ch:
+    - profile: racingbike
+  profiles_lm: []
+  graph.encoded_values: racingbike_priority, racingbike_access, roundabout, racingbike_average_speed, average_slope
+  prepare.min_network_size: 200
+  prepare.subnetworks.threads: 1
+  routing.non_ch.max_waypoint_distance: 1000000
+  import.osm.ignored_highways: motorway,trunk # typically useful for non-motorized routing
+  graph.dataaccess.default_type: RAM_STORE
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      # for security reasons bind to localhost
+      # bind_host: 0.0.0.0
+      # increase GET request limit - not necessary if /maps UI is not used or used without custom models
+      max_request_header_size: 50k
+  request_log:
+    appenders: []
+  admin_connectors:
+    - type: http
+      port: 8990
+      # bind_host: 0.0.0.0
+# See https://www.dropwizard.io/en/latest/manual/core.html#logging
+logging:
+  appenders:
+    - type: file
+      time_zone: UTC
+      current_log_filename: logs/graphhopper.log
+      log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      archive: true
+      archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
+      archived_file_count: 30
+      never_block: true
+    - type: console
+      time_zone: UTC
+      log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  loggers:
+    "com.graphhopper.osm_warnings":
+      level: DEBUG
+      additive: false
+      appenders:
+        - type: file
+          currentLogFilename: logs/osm_warnings.log
+          archive: false
+          logFormat: "[%level] %msg%n"
